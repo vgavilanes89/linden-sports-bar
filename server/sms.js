@@ -14,7 +14,7 @@ export async function sendVerificationSms(phone, code) {
   if (sid && token && from) {
     const params = new URLSearchParams({
       To: toE164(phone),
-      From: from,
+      From: toE164(from),
       Body: body,
     });
 
@@ -31,6 +31,8 @@ export async function sendVerificationSms(phone, code) {
     );
 
     if (!response.ok) {
+      const detail = await response.text().catch(() => '');
+      console.error('[Twilio SMS error]', response.status, detail);
       throw new Error('Failed to send verification text. Please try again.');
     }
 
