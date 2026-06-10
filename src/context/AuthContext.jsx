@@ -38,9 +38,12 @@ export function AuthProvider({ children }) {
       user,
       loading,
       isAdmin: user?.role === 'admin',
-      needsPhone: Boolean(user && !user.phone),
-      async updatePhone(phone) {
-        const updatedUser = await api.updatePhone(phone);
+      needsPhone: Boolean(user && !user.phoneVerified),
+      async sendPhoneVerificationCode(phone) {
+        return api.sendPhoneVerificationCode(phone);
+      },
+      async verifyPhone(phone, code) {
+        const updatedUser = await api.verifyPhone(phone, code);
         setUser(updatedUser);
         return updatedUser;
       },

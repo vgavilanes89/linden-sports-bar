@@ -13,8 +13,10 @@ import {
   listUsers,
   createEmailUser,
   touchUserLogin,
-  updateUserPhone,
+  startPhoneVerification,
+  completePhoneVerification,
 } from './db.js';
+import { sendVerificationSms } from './sms.js';
 import {
   signToken,
   authMiddleware,
@@ -79,16 +81,81 @@ app.get('/api/auth/me', authMiddleware, (req, res) => {
   res.json({ user: sanitizeUser(user) });
 });
 
-app.patch('/api/auth/phone', authMiddleware, (req, res) => {
+function generateVerificationCode() {
+  return String(Math.floor(100000 + Math.random() * 900000));
+}
+
+app.post('/api/auth/phone/send-code', authMiddleware, async (req, res) => {
   const normalizedPhone = normalizePhone(req.body.phone);
 
   if (!normalizedPhone || normalizedPhone.length < 10) {
     return res.status(400).json({ error: 'A valid phone number is required.' });
   }
 
-  const result = updateUserPhone(req.auth.sub, normalizedPhone);
+  const user = findUserById(req.auth.sub);
+  if (!user) {
+    return res.status(404).json({ error: 'User not found.' });
+  }
+
+  if (user.phone_verified && user.phone === normalizedPhone) {
+    return res.status(400).json({ error: 'This phone number is already verified on your account.' });
+  }
+
+  const code = generateVerificationCode();
+  const codeHash = await bcrypt.hash(code, 10);
+  const expiresAt = new Date(Date.now() + 10 * 60 * 1000).toISOString();
+
+  const result = startPhoneVerification(req.auth.sub, normalizedPhone, codeHash, expiresAt);
   if (result.error) {
     return res.status(409).json({ error: result.error });
+  }
+
+  try {
+    const sms = await sendVerificationSms(normalizedPhone, code);
+    res.json({
+      ok: true,
+      message: 'Verification code sent.',
+      expiresInMinutes: 10,
+      ...(sms.devMode && sms.devCode ? { devCode: sms.devCode } : {}),
+    });
+  } catch (err) {
+    res.status(503).json({ error: err.message });
+  }
+});
+
+app.post('/api/auth/phone/verify', authMiddleware, async (req, res) => {
+  const normalizedPhone = normalizePhone(req.body.phone);
+  const { code } = req.body;
+
+  if (!normalizedPhone || !code) {
+    return res.status(400).json({ error: 'Phone number and verification code are required.' });
+  }
+
+  const user = findUserById(req.auth.sub);
+  if (!user) {
+    return res.status(404).json({ error: 'User not found.' });
+  }
+
+  if (user.phone_pending !== normalizedPhone) {
+    return res.status(400).json({ error: 'Request a new verification code for this phone number.' });
+  }
+
+  if (!user.phone_verify_code_hash || !user.phone_verify_expires) {
+    return res.status(400).json({ error: 'No active verification code. Please request a new one.' });
+  }
+
+  if (new Date(user.phone_verify_expires).getTime() < Date.now()) {
+    return res.status(400).json({ error: 'Verification code expired. Please request a new one.' });
+  }
+
+  const valid = await bcrypt.compare(String(code).trim(), user.phone_verify_code_hash);
+  if (!valid) {
+    return res.status(401).json({ error: 'Invalid verification code.' });
+  }
+
+  const result = completePhoneVerification(req.auth.sub, normalizedPhone);
+  if (result.error) {
+    return res.status(400).json({ error: result.error });
   }
 
   res.json({ user: sanitizeUser(result.user) });
@@ -291,8 +358,10 @@ app.post('/api/orders', authMiddleware, (req, res) => {
     return res.status(404).json({ error: 'User not found.' });
   }
 
-  if (!user.phone) {
-    return res.status(400).json({ error: 'A phone number is required on your account before placing orders.' });
+  if (!user.phone || !user.phone_verified) {
+    return res.status(400).json({
+      error: 'A verified phone number is required on your account before placing orders.',
+    });
   }
 
   const { items, subtotal, tax, total } = req.body;

@@ -37,7 +37,17 @@ export function findUserByEmail(email) {
 
 export function findUserByPhone(phone) {
   if (!phone) return null;
-  return readUsers().find((user) => user.phone === phone);
+  return readUsers().find(
+    (user) => user.phone === phone || user.phone_pending === phone
+  );
+}
+
+export function isPhoneTakenByOther(phone, userId) {
+  if (!phone) return false;
+  return readUsers().some(
+    (user) =>
+      user.id !== userId && (user.phone === phone || user.phone_pending === phone)
+  );
 }
 
 export function findUserByProvider(provider, providerId) {
@@ -66,6 +76,10 @@ export function upsertUser(user) {
       provider_id: user.provider_id ?? existing.provider_id,
       role: user.role ?? existing.role,
       password_hash: user.password_hash ?? existing.password_hash,
+      phone_verified: user.phone_verified ?? existing.phone_verified ?? false,
+      phone_pending: user.phone_pending ?? existing.phone_pending ?? null,
+      phone_verify_code_hash: user.phone_verify_code_hash ?? existing.phone_verify_code_hash ?? null,
+      phone_verify_expires: user.phone_verify_expires ?? existing.phone_verify_expires ?? null,
       last_login_at: now,
     };
 
@@ -81,6 +95,10 @@ export function upsertUser(user) {
     provider: user.provider,
     provider_id: user.provider_id ?? null,
     password_hash: user.password_hash ?? null,
+    phone_verified: user.phone_verified ?? false,
+    phone_pending: user.phone_pending ?? null,
+    phone_verify_code_hash: user.phone_verify_code_hash ?? null,
+    phone_verify_expires: user.phone_verify_expires ?? null,
     role: user.role ?? 'user',
     created_at: now,
     last_login_at: now,
@@ -110,10 +128,14 @@ export function createEmailUser({ id, name, email, phone, passwordHash, role }) 
     id,
     name,
     email,
-    phone,
+    phone: null,
     provider: 'email',
     provider_id: email,
     password_hash: passwordHash,
+    phone_verified: false,
+    phone_pending: phone,
+    phone_verify_code_hash: null,
+    phone_verify_expires: null,
     role: role ?? 'user',
     created_at: now,
     last_login_at: now,
@@ -134,9 +156,8 @@ export function touchUserLogin(userId) {
   return updated;
 }
 
-export function updateUserPhone(userId, phone) {
-  const existingByPhone = findUserByPhone(phone);
-  if (existingByPhone && existingByPhone.id !== userId) {
+export function startPhoneVerification(userId, phone, codeHash, expiresAt) {
+  if (isPhoneTakenByOther(phone, userId)) {
     return { error: 'This phone number is already linked to another account.' };
   }
 
@@ -146,7 +167,49 @@ export function updateUserPhone(userId, phone) {
     return { error: 'User not found.' };
   }
 
-  const updated = { ...existing, phone };
+  const updated = {
+    ...existing,
+    phone_pending: phone,
+    phone_verify_code_hash: codeHash,
+    phone_verify_expires: expiresAt,
+  };
+
   writeUsers(users.map((entry) => (entry.id === userId ? updated : entry)));
   return { user: updated };
+}
+
+export function completePhoneVerification(userId, phone) {
+  const users = readUsers();
+  const existing = users.find((user) => user.id === userId);
+  if (!existing) {
+    return { error: 'User not found.' };
+  }
+
+  const updated = {
+    ...existing,
+    phone,
+    phone_verified: true,
+    phone_pending: null,
+    phone_verify_code_hash: null,
+    phone_verify_expires: null,
+  };
+
+  writeUsers(users.map((entry) => (entry.id === userId ? updated : entry)));
+  return { user: updated };
+}
+
+export function clearPhoneVerification(userId) {
+  const users = readUsers();
+  const existing = users.find((user) => user.id === userId);
+  if (!existing) return null;
+
+  const updated = {
+    ...existing,
+    phone_pending: null,
+    phone_verify_code_hash: null,
+    phone_verify_expires: null,
+  };
+
+  writeUsers(users.map((entry) => (entry.id === userId ? updated : entry)));
+  return updated;
 }

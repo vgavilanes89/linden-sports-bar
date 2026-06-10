@@ -41,6 +41,8 @@ export function sanitizeUser(user) {
     name: user.name,
     email: user.email,
     phone: user.phone,
+    phoneVerified: Boolean(user.phone_verified),
+    phonePending: user.phone_pending ?? null,
     provider: user.provider,
     role: user.role,
     createdAt: user.created_at,

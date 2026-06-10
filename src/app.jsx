@@ -119,7 +119,7 @@ export default function App() {
         isAuthModalOpen={isAuthModalOpen}
         setIsAuthModalOpen={setIsAuthModalOpen}
         onAuthenticated={(loggedInUser) => {
-          if (!loggedInUser.phone) {
+          if (!loggedInUser.phoneVerified) {
             setActiveTab('account');
           }
         }}

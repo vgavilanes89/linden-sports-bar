@@ -212,7 +212,7 @@ export default function Navbar({
     {user && needsPhone && (
       <div className="bg-amber-500 text-black text-sm font-medium px-4 py-2.5 flex items-center justify-center gap-2">
         <Phone className="w-4 h-4 shrink-0" />
-        <span>Add your phone number to place orders.</span>
+        <span>Verify your phone number to place orders.</span>
         <button
           onClick={() => setActiveTab('account')}
           className="underline font-bold hover:text-zinc-900 ml-1"

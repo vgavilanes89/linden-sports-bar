@@ -45,10 +45,17 @@ export const api = {
     return request('/api/auth/me');
   },
 
-  async updatePhone(phone) {
-    const data = await request('/api/auth/phone', {
-      method: 'PATCH',
+  async sendPhoneVerificationCode(phone) {
+    return request('/api/auth/phone/send-code', {
+      method: 'POST',
       body: JSON.stringify({ phone }),
+    });
+  },
+
+  async verifyPhone(phone, code) {
+    const data = await request('/api/auth/phone/verify', {
+      method: 'POST',
+      body: JSON.stringify({ phone, code }),
     });
     return data.user;
   },
