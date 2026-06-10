@@ -113,24 +113,25 @@ export default function Menu({ addToCart }) {
         </div>
 
         {activeSection === FOOD_SECTION && foodCategoriesWithItems.length > 0 && (
-          <div className="mb-10 -mx-4 px-4 sm:mx-0 sm:px-0">
-            <div className="flex gap-2 overflow-x-auto pb-2 [scrollbar-width:thin]">
-              {foodCategoriesWithItems.map((category) => (
-                <button
-                  key={category}
-                  type="button"
-                  onClick={() => setActiveCategory(category)}
-                  className={`shrink-0 rounded-full px-4 py-2.5 text-sm font-semibold whitespace-nowrap transition-colors ${
-                    activeCategory === category
-                      ? 'bg-amber-500 text-black'
-                      : 'bg-zinc-900 text-zinc-400 hover:bg-zinc-800 hover:text-white'
-                  }`}
-                >
-                  {formatCategoryLabel(category)}
-                </button>
-              ))}
-            </div>
-          </div>
+          <nav
+            className="mb-10 flex w-full flex-wrap items-center justify-between gap-x-6 gap-y-3"
+            aria-label="Food categories"
+          >
+            {foodCategoriesWithItems.map((category) => (
+              <button
+                key={category}
+                type="button"
+                onClick={() => setActiveCategory(category)}
+                className={`text-xs sm:text-sm font-semibold whitespace-nowrap transition-colors hover:underline ${
+                  activeCategory === category
+                    ? 'text-amber-500 underline'
+                    : 'text-zinc-400 hover:text-white'
+                }`}
+              >
+                {formatCategoryLabel(category)}
+              </button>
+            ))}
+          </nav>
         )}
 
         {activeSection === FOOD_SECTION ? (
