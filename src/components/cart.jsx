@@ -10,6 +10,7 @@ export default function Cart({
   updateQuantity,
   cartTotal,
   setIsAuthModalOpen,
+  onPlaceOrder,
 }) {
   const { user } = useAuth();
   return (
@@ -72,11 +73,11 @@ export default function Cart({
             <button 
               className="w-full bg-amber-500 hover:bg-amber-400 text-black font-bold py-4 rounded-xl flex justify-center items-center gap-2 transition-colors"
               onClick={() => {
-                if(!user) {
+                if (!user) {
                   setIsCartOpen(false);
                   setIsAuthModalOpen(true);
                 } else {
-                  alert("This would integrate with your POS and Payment Gateway!");
+                  onPlaceOrder(user);
                 }
               }}
             >

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { ShoppingCart, User, Menu as MenuIcon, X, Shield } from 'lucide-react';
+import { ShoppingCart, Menu as MenuIcon, X, Shield, ClipboardList, LogOut } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import UserMenu from './usermenu';
 
 export default function Navbar({
   activeTab,
@@ -11,14 +12,6 @@ export default function Navbar({
 }) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { user, isAdmin, logout } = useAuth();
-
-  const handleAuthClick = () => {
-    if (user) {
-      logout();
-    } else {
-      setIsAuthModalOpen(true);
-    }
-  };
 
   return (
     <nav className="bg-black text-white sticky top-0 z-50 border-b border-amber-500/30">
@@ -74,15 +67,7 @@ export default function Navbar({
             )}
 
             <div className="flex items-center space-x-4 border-l border-zinc-800 pl-6">
-              <button
-                onClick={handleAuthClick}
-                className="flex items-center hover:text-amber-500 transition-colors"
-              >
-                <User className="w-5 h-5 mr-1" />
-                <span className="text-sm max-w-[120px] truncate">
-                  {user ? user.name.split(' ')[0] : 'Login'}
-                </span>
-              </button>
+              <UserMenu setActiveTab={setActiveTab} setIsAuthModalOpen={setIsAuthModalOpen} />
               <button
                 onClick={() => setIsCartOpen(true)}
                 className="relative flex items-center hover:text-amber-500 transition-colors text-amber-500"
@@ -175,15 +160,39 @@ export default function Navbar({
                 Admin
               </button>
             )}
-            <button
-              onClick={() => {
-                handleAuthClick();
-                setIsMobileMenuOpen(false);
-              }}
-              className="block w-full text-left px-3 py-4 text-base font-medium text-amber-500 hover:bg-black"
-            >
-              {user ? `Sign Out (${user.name.split(' ')[0]})` : 'Login / Register'}
-            </button>
+            {user ? (
+              <>
+                <button
+                  onClick={() => {
+                    setActiveTab('orders');
+                    setIsMobileMenuOpen(false);
+                  }}
+                  className="block w-full text-left px-3 py-4 text-base font-medium hover:text-amber-500 hover:bg-black flex items-center gap-2"
+                >
+                  <ClipboardList className="w-5 h-5" /> My Orders
+                </button>
+                <button
+                  onClick={() => {
+                    logout();
+                    setActiveTab('home');
+                    setIsMobileMenuOpen(false);
+                  }}
+                  className="block w-full text-left px-3 py-4 text-base font-medium text-red-400 hover:bg-black flex items-center gap-2"
+                >
+                  <LogOut className="w-5 h-5" /> Sign Out ({user.name.split(' ')[0]})
+                </button>
+              </>
+            ) : (
+              <button
+                onClick={() => {
+                  setIsAuthModalOpen(true);
+                  setIsMobileMenuOpen(false);
+                }}
+                className="block w-full text-left px-3 py-4 text-base font-medium text-amber-500 hover:bg-black"
+              >
+                Login / Register
+              </button>
+            )}
           </div>
         </div>
       )}

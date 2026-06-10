@@ -11,6 +11,8 @@ import Specials from './pages/specials';
 import Reservations from './pages/reservations';
 import Events from './pages/events';
 import Admin from './pages/admin';
+import Orders from './pages/orders';
+import { saveOrder } from './lib/orders';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState('home');
@@ -46,6 +48,23 @@ export default function App() {
 
   const cartTotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
 
+  const placeOrder = (user) => {
+    const subtotal = cartTotal;
+    const tax = subtotal * 0.0662;
+    const total = subtotal + tax;
+
+    saveOrder(user.id, {
+      items: cart.map(({ id, name, price, quantity }) => ({ id, name, price, quantity })),
+      subtotal,
+      tax,
+      total,
+    });
+
+    setCart([]);
+    setIsCartOpen(false);
+    setActiveTab('orders');
+  };
+
   return (
     <div className="min-h-screen bg-black font-sans selection:bg-amber-500 selection:text-black">
       <Navbar
@@ -62,6 +81,9 @@ export default function App() {
         {activeTab === 'menu' && <Menu addToCart={addToCart} />}
         {activeTab === 'reservations' && <Reservations />}
         {activeTab === 'events' && <Events setActiveTab={setActiveTab} />}
+        {activeTab === 'orders' && (
+          <Orders setActiveTab={setActiveTab} setIsAuthModalOpen={setIsAuthModalOpen} />
+        )}
         {activeTab === 'admin' && (
           <Admin setActiveTab={setActiveTab} setIsAuthModalOpen={setIsAuthModalOpen} />
         )}
@@ -77,6 +99,7 @@ export default function App() {
         updateQuantity={updateQuantity}
         cartTotal={cartTotal}
         setIsAuthModalOpen={setIsAuthModalOpen}
+        onPlaceOrder={placeOrder}
       />
 
       <AuthModal isAuthModalOpen={isAuthModalOpen} setIsAuthModalOpen={setIsAuthModalOpen} />
