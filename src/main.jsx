@@ -6,6 +6,14 @@ import { AuthProvider } from './context/AuthContext.jsx';
 import { OAuthConfigProvider, useOAuthConfig } from './context/OAuthConfigContext.jsx';
 import './index.css';
 
+function AppTree() {
+  return (
+    <AuthProvider>
+      <App />
+    </AuthProvider>
+  );
+}
+
 function AppWithOAuth() {
   const { googleClientId, loading } = useOAuthConfig();
 
@@ -17,16 +25,14 @@ function AppWithOAuth() {
     );
   }
 
-  const app = (
-    <AuthProvider>
-      <App />
-    </AuthProvider>
-  );
+  if (!googleClientId) {
+    return <AppTree />;
+  }
 
-  return googleClientId ? (
-    <GoogleOAuthProvider clientId={googleClientId}>{app}</GoogleOAuthProvider>
-  ) : (
-    app
+  return (
+    <GoogleOAuthProvider clientId={googleClientId}>
+      <AppTree />
+    </GoogleOAuthProvider>
   );
 }
 

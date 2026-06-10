@@ -139,6 +139,13 @@ app.post('/api/auth/login', async (req, res) => {
   res.json(loginResponse(loggedIn));
 });
 
+app.post('/api/auth/email-phone', (_req, res) => {
+  res.status(410).json({
+    error:
+      'Sign-in has been updated. Use Create Account with Email to register, or Log In with Email and your password.',
+  });
+});
+
 app.post('/api/auth/social', (req, res) => {
   const { provider, name, email, phone, providerId } = req.body;
   const allowed = ['google', 'apple', 'yahoo'];

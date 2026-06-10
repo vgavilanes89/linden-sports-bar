@@ -11,10 +11,10 @@ import {
   UserPlus,
   LogIn,
 } from 'lucide-react';
-import { GoogleLogin } from '@react-oauth/google';
 import AppleSignin from 'react-apple-signin-auth';
 import { useAuth } from '../context/AuthContext';
 import { useOAuthConfig } from '../context/OAuthConfigContext';
+import GoogleSignInButton from './googlesigninbutton';
 
 const inputClassName =
   'w-full bg-black border border-zinc-700 rounded-xl px-4 py-3 text-white placeholder:text-zinc-600 focus:outline-none focus:border-amber-500 transition-colors';
@@ -152,17 +152,11 @@ export default function AuthModal({ isAuthModalOpen, setIsAuthModalOpen }) {
         {mode === 'main' && (
           <div className="space-y-4">
             {googleClientId ? (
-              <div className="flex justify-center [&>div]:w-full">
-                <GoogleLogin
-                  onSuccess={handleGoogleSuccess}
-                  onError={() => setError('Google sign-in was cancelled or failed.')}
-                  theme="filled_black"
-                  size="large"
-                  width="100%"
-                  text="continue_with"
-                  shape="pill"
-                />
-              </div>
+              <GoogleSignInButton
+                onSuccess={handleGoogleSuccess}
+                onError={() => setError('Google sign-in was cancelled or failed.')}
+                disabled={loading}
+              />
             ) : (
               <p className="text-xs text-zinc-500 text-center bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-3">
                 Google sign-in is not configured yet.
