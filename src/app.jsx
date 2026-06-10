@@ -58,7 +58,7 @@ export default function App() {
 
       <main>
         {activeTab === 'home' && <Home setActiveTab={setActiveTab} />}
-        {activeTab === 'specials' && <Specials addToCart={addToCart} />}
+        {activeTab === 'specials' && <Specials />}
         {activeTab === 'menu' && <Menu addToCart={addToCart} />}
         {activeTab === 'reservations' && <Reservations />}
         {activeTab === 'events' && <Events setActiveTab={setActiveTab} />}
