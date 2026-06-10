@@ -17,6 +17,13 @@ import {
   sanitizeUser,
   isAdminEmail,
 } from './auth.js';
+import {
+  createOrder,
+  listOrdersByUser,
+  listAllOrders,
+  deleteOrder,
+  sanitizeOrder,
+} from './orders.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -210,6 +217,49 @@ app.post('/api/auth/apple', async (req, res) => {
 app.get('/api/admin/users', authMiddleware, adminMiddleware, (_req, res) => {
   const users = listUsers().map(sanitizeUser);
   res.json({ users, total: users.length });
+});
+
+app.get('/api/orders', authMiddleware, (req, res) => {
+  const orders = listOrdersByUser(req.auth.sub).map(sanitizeOrder);
+  res.json({ orders, total: orders.length });
+});
+
+app.post('/api/orders', authMiddleware, (req, res) => {
+  const user = findUserById(req.auth.sub);
+  if (!user) {
+    return res.status(404).json({ error: 'User not found.' });
+  }
+
+  const { items, subtotal, tax, total } = req.body;
+
+  if (!Array.isArray(items) || items.length === 0) {
+    return res.status(400).json({ error: 'Order must include at least one item.' });
+  }
+
+  const order = createOrder({
+    userId: user.id,
+    userName: user.name,
+    userEmail: user.email,
+    items,
+    subtotal: Number(subtotal),
+    tax: Number(tax),
+    total: Number(total),
+  });
+
+  res.status(201).json({ order: sanitizeOrder(order) });
+});
+
+app.get('/api/admin/orders', authMiddleware, adminMiddleware, (_req, res) => {
+  const orders = listAllOrders().map(sanitizeOrder);
+  res.json({ orders, total: orders.length });
+});
+
+app.delete('/api/admin/orders/:orderId', authMiddleware, adminMiddleware, (req, res) => {
+  const deleted = deleteOrder(req.params.orderId);
+  if (!deleted) {
+    return res.status(404).json({ error: 'Order not found.' });
+  }
+  res.json({ ok: true, order: sanitizeOrder(deleted) });
 });
 
 if (isProduction) {

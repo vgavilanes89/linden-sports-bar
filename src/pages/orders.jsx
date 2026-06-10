@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import { ClipboardList, Package, ChevronRight } from 'lucide-react';
+import React, { useCallback, useEffect, useState } from 'react';
+import { ClipboardList, Package, ChevronRight, Loader2 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { getOrders } from '../lib/orders';
 
@@ -17,12 +17,33 @@ function formatDate(iso) {
 export default function Orders({ setActiveTab, setIsAuthModalOpen }) {
   const { user } = useAuth();
   const [orders, setOrders] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  const loadOrders = useCallback(async () => {
+    if (!user) return;
+
+    setLoading(true);
+    setError('');
+
+    try {
+      const data = await getOrders();
+      setOrders(data);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  }, [user]);
 
   useEffect(() => {
     if (user) {
-      setOrders(getOrders(user.id));
+      loadOrders();
+    } else {
+      setOrders([]);
+      setLoading(false);
     }
-  }, [user]);
+  }, [user, loadOrders]);
 
   if (!user) {
     return (
@@ -55,7 +76,17 @@ export default function Orders({ setActiveTab, setIsAuthModalOpen }) {
           </p>
         </div>
 
-        {orders.length === 0 ? (
+        {error && (
+          <div className="bg-red-950/40 border border-red-800 text-red-300 rounded-xl p-4 mb-6">
+            {error}
+          </div>
+        )}
+
+        {loading ? (
+          <div className="text-center text-zinc-500 py-16 flex items-center justify-center gap-2">
+            <Loader2 className="w-5 h-5 animate-spin" /> Loading orders...
+          </div>
+        ) : orders.length === 0 ? (
           <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-12 text-center">
             <Package className="w-14 h-14 text-zinc-600 mx-auto mb-4" />
             <h3 className="text-xl font-bold text-white mb-2">No orders yet</h3>

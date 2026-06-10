@@ -11,6 +11,7 @@ export default function Cart({
   cartTotal,
   setIsAuthModalOpen,
   onPlaceOrder,
+  orderPlacing,
 }) {
   const { user } = useAuth();
   return (
@@ -71,7 +72,8 @@ export default function Cart({
               <span className="text-amber-500">${(cartTotal * 1.0662).toFixed(2)}</span>
             </div>
             <button 
-              className="w-full bg-amber-500 hover:bg-amber-400 text-black font-bold py-4 rounded-xl flex justify-center items-center gap-2 transition-colors"
+              className="w-full bg-amber-500 hover:bg-amber-400 disabled:opacity-60 text-black font-bold py-4 rounded-xl flex justify-center items-center gap-2 transition-colors"
+              disabled={orderPlacing}
               onClick={() => {
                 if (!user) {
                   setIsCartOpen(false);
@@ -81,7 +83,7 @@ export default function Cart({
                 }
               }}
             >
-              Checkout <ChevronRight className="w-5 h-5" />
+              {orderPlacing ? 'Placing Order...' : 'Checkout'} <ChevronRight className="w-5 h-5" />
             </button>
           </div>
         )}

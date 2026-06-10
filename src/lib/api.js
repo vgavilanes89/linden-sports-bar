@@ -85,6 +85,27 @@ export const api = {
     return request('/api/admin/users');
   },
 
+  async getOrders() {
+    return request('/api/orders');
+  },
+
+  async createOrder(payload) {
+    return request('/api/orders', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+  },
+
+  async getAdminOrders() {
+    return request('/api/admin/orders');
+  },
+
+  async deleteAdminOrder(orderId) {
+    return request(`/api/admin/orders/${orderId}`, {
+      method: 'DELETE',
+    });
+  },
+
   logout() {
     setToken(null);
   },

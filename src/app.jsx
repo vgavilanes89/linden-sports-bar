@@ -12,13 +12,14 @@ import Reservations from './pages/reservations';
 import Events from './pages/events';
 import Admin from './pages/admin';
 import Orders from './pages/orders';
-import { saveOrder } from './lib/orders';
+import { placeOrder } from './lib/orders';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState('home');
   const [cart, setCart] = useState([]);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [isCartOpen, setIsCartOpen] = useState(false);
+  const [orderPlacing, setOrderPlacing] = useState(false);
 
   const addToCart = (item) => {
     setCart((prev) => {
@@ -48,21 +49,27 @@ export default function App() {
 
   const cartTotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
 
-  const placeOrder = (user) => {
+  const handlePlaceOrder = async (user) => {
     const subtotal = cartTotal;
     const tax = subtotal * 0.0662;
     const total = subtotal + tax;
 
-    saveOrder(user.id, {
-      items: cart.map(({ id, name, price, quantity }) => ({ id, name, price, quantity })),
-      subtotal,
-      tax,
-      total,
-    });
-
-    setCart([]);
-    setIsCartOpen(false);
-    setActiveTab('orders');
+    setOrderPlacing(true);
+    try {
+      await placeOrder({
+        items: cart.map(({ id, name, price, quantity }) => ({ id, name, price, quantity })),
+        subtotal,
+        tax,
+        total,
+      });
+      setCart([]);
+      setIsCartOpen(false);
+      setActiveTab('orders');
+    } catch (err) {
+      alert(err.message || 'Could not place order. Please try again.');
+    } finally {
+      setOrderPlacing(false);
+    }
   };
 
   return (
@@ -99,7 +106,8 @@ export default function App() {
         updateQuantity={updateQuantity}
         cartTotal={cartTotal}
         setIsAuthModalOpen={setIsAuthModalOpen}
-        onPlaceOrder={placeOrder}
+        onPlaceOrder={handlePlaceOrder}
+        orderPlacing={orderPlacing}
       />
 
       <AuthModal isAuthModalOpen={isAuthModalOpen} setIsAuthModalOpen={setIsAuthModalOpen} />
