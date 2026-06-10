@@ -2,12 +2,15 @@ import React from 'react';
 import { ShoppingCart, X, ChevronRight } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
+const FOOD_SECTION = 'Food';
+
 export default function Cart({
   isCartOpen,
   setIsCartOpen,
   cart,
   removeFromCart,
   updateQuantity,
+  updateCartComment,
   cartTotal,
   setIsAuthModalOpen,
   setActiveTab,
@@ -39,20 +42,62 @@ export default function Cart({
               <p>Your cart is empty.</p>
             </div>
           ) : (
-            cart.map(item => (
-              <div key={item.id} className="flex justify-between items-center bg-zinc-900 p-4 rounded-xl border border-zinc-800">
-                <div className="flex-1">
-                  <h4 className="font-bold text-white">{item.name}</h4>
-                  <div className="text-amber-500 font-medium">${(item.price * item.quantity).toFixed(2)}</div>
+            cart.map((item) => (
+              <div
+                key={item.cartLineId}
+                className="bg-zinc-900 p-4 rounded-xl border border-zinc-800 space-y-3"
+              >
+                <div className="flex justify-between items-start gap-3">
+                  <div className="flex-1 min-w-0">
+                    <h4 className="font-bold text-white">{item.name}</h4>
+                    <div className="text-amber-500 font-medium mt-1">
+                      ${(item.price * item.quantity).toFixed(2)}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-3 bg-black px-2 py-1 rounded-lg border border-zinc-800">
+                      <button
+                        type="button"
+                        onClick={() => updateQuantity(item.cartLineId, -1)}
+                        className="text-zinc-400 hover:text-amber-500 px-2 font-bold"
+                      >
+                        -
+                      </button>
+                      <span className="text-white font-medium w-4 text-center">{item.quantity}</span>
+                      <button
+                        type="button"
+                        onClick={() => updateQuantity(item.cartLineId, 1)}
+                        className="text-zinc-400 hover:text-amber-500 px-2 font-bold"
+                      >
+                        +
+                      </button>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => removeFromCart(item.cartLineId)}
+                      className="text-zinc-600 hover:text-red-500"
+                      aria-label={`Remove ${item.name} from cart`}
+                    >
+                      <X className="w-5 h-5" />
+                    </button>
+                  </div>
                 </div>
-                <div className="flex items-center gap-3 bg-black px-2 py-1 rounded-lg border border-zinc-800">
-                  <button onClick={() => updateQuantity(item.id, -1)} className="text-zinc-400 hover:text-amber-500 px-2 font-bold">-</button>
-                  <span className="text-white font-medium w-4 text-center">{item.quantity}</span>
-                  <button onClick={() => updateQuantity(item.id, 1)} className="text-zinc-400 hover:text-amber-500 px-2 font-bold">+</button>
-                </div>
-                <button onClick={() => removeFromCart(item.id)} className="ml-4 text-zinc-600 hover:text-red-500">
-                  <X className="w-5 h-5" />
-                </button>
+
+                {item.section === FOOD_SECTION && (
+                  <label className="block">
+                    <span className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
+                      Special instructions
+                    </span>
+                    <textarea
+                      value={item.comment ?? ''}
+                      onChange={(e) => updateCartComment(item.cartLineId, e.target.value)}
+                      placeholder="e.g. no onions, extra sauce, well done..."
+                      rows={2}
+                      maxLength={200}
+                      className="mt-1.5 w-full resize-none rounded-lg border border-zinc-700 bg-black px-3 py-2 text-sm text-white placeholder:text-zinc-600 focus:border-amber-500 focus:outline-none"
+                    />
+                  </label>
+                )}
               </div>
             ))
           )}

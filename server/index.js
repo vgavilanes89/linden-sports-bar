@@ -405,11 +405,23 @@ app.post('/api/orders', authMiddleware, (req, res) => {
     return res.status(400).json({ error: 'Order must include at least one item.' });
   }
 
+  const sanitizedItems = items.map((item) => {
+    const comment =
+      typeof item.comment === 'string' ? item.comment.trim().slice(0, 200) : '';
+    return {
+      id: item.id,
+      name: item.name,
+      price: Number(item.price),
+      quantity: Number(item.quantity),
+      ...(comment ? { comment } : {}),
+    };
+  });
+
   const order = createOrder({
     userId: user.id,
     userName: user.name,
     userEmail: user.email,
-    items,
+    items: sanitizedItems,
     subtotal: Number(subtotal),
     tax: Number(tax),
     total: Number(total),

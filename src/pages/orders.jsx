@@ -119,12 +119,21 @@ export default function Orders({ setActiveTab, setIsAuthModalOpen }) {
                 </div>
 
                 <ul className="p-5 space-y-3">
-                  {order.items.map((item) => (
-                    <li key={`${order.id}-${item.id}`} className="flex justify-between text-sm">
-                      <span className="text-zinc-300">
-                        {item.quantity}× {item.name}
-                      </span>
-                      <span className="text-zinc-400">${(item.price * item.quantity).toFixed(2)}</span>
+                  {order.items.map((item, index) => (
+                    <li key={`${order.id}-${item.id}-${index}`}>
+                      <div className="flex justify-between text-sm">
+                        <span className="text-zinc-300">
+                          {item.quantity}× {item.name}
+                        </span>
+                        <span className="text-zinc-400">
+                          ${(item.price * item.quantity).toFixed(2)}
+                        </span>
+                      </div>
+                      {item.comment && (
+                        <p className="mt-1 text-xs text-zinc-500 italic">
+                          Note: {item.comment}
+                        </p>
+                      )}
                     </li>
                   ))}
                 </ul>

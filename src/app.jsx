@@ -24,27 +24,44 @@ export default function App() {
 
   const addToCart = (item) => {
     setCart((prev) => {
-      const existing = prev.find((i) => i.id === item.id);
+      const existing = prev.find(
+        (line) => line.id === item.id && !line.comment?.trim()
+      );
       if (existing) {
-        return prev.map((i) => (i.id === item.id ? { ...i, quantity: i.quantity + 1 } : i));
+        return prev.map((line) =>
+          line.cartLineId === existing.cartLineId
+            ? { ...line, quantity: line.quantity + 1 }
+            : line
+        );
       }
-      return [...prev, { ...item, quantity: 1 }];
+      return [
+        ...prev,
+        { ...item, cartLineId: crypto.randomUUID(), quantity: 1, comment: '' },
+      ];
     });
   };
 
-  const removeFromCart = (id) => {
-    setCart((prev) => prev.filter((item) => item.id !== id));
+  const removeFromCart = (cartLineId) => {
+    setCart((prev) => prev.filter((item) => item.cartLineId !== cartLineId));
   };
 
-  const updateQuantity = (id, delta) => {
+  const updateQuantity = (cartLineId, delta) => {
     setCart((prev) =>
       prev.map((item) => {
-        if (item.id === id) {
+        if (item.cartLineId === cartLineId) {
           const newQuantity = Math.max(1, item.quantity + delta);
           return { ...item, quantity: newQuantity };
         }
         return item;
       })
+    );
+  };
+
+  const updateCartComment = (cartLineId, comment) => {
+    setCart((prev) =>
+      prev.map((item) =>
+        item.cartLineId === cartLineId ? { ...item, comment } : item
+      )
     );
   };
 
@@ -58,7 +75,13 @@ export default function App() {
     setOrderPlacing(true);
     try {
       await placeOrder({
-        items: cart.map(({ id, name, price, quantity }) => ({ id, name, price, quantity })),
+        items: cart.map(({ id, name, price, quantity, comment }) => ({
+          id,
+          name,
+          price,
+          quantity,
+          ...(comment?.trim() ? { comment: comment.trim() } : {}),
+        })),
         subtotal,
         tax,
         total,
@@ -108,6 +131,7 @@ export default function App() {
         cart={cart}
         removeFromCart={removeFromCart}
         updateQuantity={updateQuantity}
+        updateCartComment={updateCartComment}
         cartTotal={cartTotal}
         setIsAuthModalOpen={setIsAuthModalOpen}
         setActiveTab={setActiveTab}

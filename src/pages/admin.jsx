@@ -347,7 +347,18 @@ export default function Admin({ setActiveTab, setIsAuthModalOpen }) {
                           <p className="text-zinc-500 text-sm">{order.userEmail || '—'}</p>
                         </td>
                         <td className="px-6 py-4 text-zinc-300 text-sm max-w-xs">
-                          {order.items.map((item) => `${item.quantity}× ${item.name}`).join(', ')}
+                          <ul className="space-y-1">
+                            {order.items.map((item, index) => (
+                              <li key={`${order.id}-${item.id}-${index}`}>
+                                {item.quantity}× {item.name}
+                                {item.comment && (
+                                  <span className="block text-xs text-zinc-500 italic">
+                                    {item.comment}
+                                  </span>
+                                )}
+                              </li>
+                            ))}
+                          </ul>
                         </td>
                         <td className="px-6 py-4 text-amber-500 font-bold">
                           ${order.total.toFixed(2)}
