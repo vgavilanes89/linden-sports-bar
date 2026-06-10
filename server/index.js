@@ -15,6 +15,8 @@ import {
   touchUserLogin,
   startPhoneVerification,
   completePhoneVerification,
+  updateUserByAdmin,
+  deleteUser,
 } from './db.js';
 import { sendVerificationSms } from './sms.js';
 import {
@@ -29,6 +31,7 @@ import {
   listOrdersByUser,
   listAllOrders,
   deleteOrder,
+  deleteOrdersByUserId,
   sanitizeOrder,
 } from './orders.js';
 
@@ -345,6 +348,38 @@ app.post('/api/auth/apple', async (req, res) => {
 app.get('/api/admin/users', authMiddleware, adminMiddleware, (_req, res) => {
   const users = listUsers().map(sanitizeUser);
   res.json({ users, total: users.length });
+});
+
+app.patch('/api/admin/users/:userId', authMiddleware, adminMiddleware, (req, res) => {
+  const { name, email, phone, role, phoneVerified } = req.body;
+  const result = updateUserByAdmin(req.params.userId, {
+    name,
+    email,
+    phone,
+    role,
+    phoneVerified,
+  });
+
+  if (result.error) {
+    const status = result.error === 'User not found.' ? 404 : 409;
+    return res.status(status).json({ error: result.error });
+  }
+
+  res.json({ user: sanitizeUser(result.user) });
+});
+
+app.delete('/api/admin/users/:userId', authMiddleware, adminMiddleware, (req, res) => {
+  if (req.params.userId === req.auth.sub) {
+    return res.status(400).json({ error: 'You cannot delete your own account.' });
+  }
+
+  const result = deleteUser(req.params.userId);
+  if (result.error) {
+    return res.status(404).json({ error: result.error });
+  }
+
+  const ordersRemoved = deleteOrdersByUserId(req.params.userId);
+  res.json({ ok: true, ordersRemoved });
 });
 
 app.get('/api/orders', authMiddleware, (req, res) => {

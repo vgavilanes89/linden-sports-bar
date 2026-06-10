@@ -70,6 +70,14 @@ export function deleteOrder(id) {
   return order;
 }
 
+export function deleteOrdersByUserId(userId) {
+  const orders = readOrders();
+  const remaining = orders.filter((order) => order.user_id !== userId);
+  const removed = orders.length - remaining.length;
+  writeOrders(remaining);
+  return removed;
+}
+
 export function sanitizeOrder(order) {
   return {
     id: order.id,

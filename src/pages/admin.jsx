@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { Users, Shield, RefreshCw, LogIn, ClipboardList, Trash2 } from 'lucide-react';
+import { Users, Shield, RefreshCw, LogIn, ClipboardList, Trash2, Pencil } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { api } from '../lib/api';
+import EditUserModal from '../components/editusermodal';
 
 const PROVIDER_LABELS = {
   google: 'Google',
@@ -30,6 +31,8 @@ export default function Admin({ setActiveTab, setIsAuthModalOpen }) {
   const [totalOrders, setTotalOrders] = useState(0);
   const [loading, setLoading] = useState(true);
   const [deletingOrderId, setDeletingOrderId] = useState(null);
+  const [deletingUserId, setDeletingUserId] = useState(null);
+  const [editingUser, setEditingUser] = useState(null);
   const [error, setError] = useState('');
 
   const loadUsers = async () => {
@@ -54,6 +57,32 @@ export default function Admin({ setActiveTab, setIsAuthModalOpen }) {
       setError(err.message);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleSaveUser = async (userId, payload) => {
+    const updated = await api.updateAdminUser(userId, payload);
+    setUsers((prev) => prev.map((entry) => (entry.id === userId ? updated : entry)));
+  };
+
+  const handleDeleteUser = async (userId) => {
+    if (!window.confirm('Delete this user and all of their orders? This cannot be undone.')) return;
+
+    setDeletingUserId(userId);
+    setError('');
+
+    try {
+      const result = await api.deleteAdminUser(userId);
+      setUsers((prev) => prev.filter((entry) => entry.id !== userId));
+      setTotalUsers((prev) => Math.max(0, prev - 1));
+      if (result.ordersRemoved > 0) {
+        setOrders((prev) => prev.filter((order) => order.userId !== userId));
+        setTotalOrders((prev) => Math.max(0, prev - result.ordersRemoved));
+      }
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setDeletingUserId(null);
     }
   };
 
@@ -215,18 +244,19 @@ export default function Admin({ setActiveTab, setIsAuthModalOpen }) {
                     <th className="px-6 py-4 font-semibold">Role</th>
                     <th className="px-6 py-4 font-semibold">Joined</th>
                     <th className="px-6 py-4 font-semibold">Last Login</th>
+                    <th className="px-6 py-4 font-semibold">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
                   {loading ? (
                     <tr>
-                      <td colSpan={7} className="px-6 py-12 text-center text-zinc-500">
+                      <td colSpan={8} className="px-6 py-12 text-center text-zinc-500">
                         Loading users...
                       </td>
                     </tr>
                   ) : users.length === 0 ? (
                     <tr>
-                      <td colSpan={7} className="px-6 py-12 text-center text-zinc-500">
+                      <td colSpan={8} className="px-6 py-12 text-center text-zinc-500">
                         No users have signed in yet.
                       </td>
                     </tr>
@@ -235,7 +265,12 @@ export default function Admin({ setActiveTab, setIsAuthModalOpen }) {
                       <tr key={entry.id} className="border-b border-zinc-800/80 hover:bg-black/40">
                         <td className="px-6 py-4 font-semibold text-white">{entry.name}</td>
                         <td className="px-6 py-4 text-zinc-300">{entry.email || '—'}</td>
-                        <td className="px-6 py-4 text-zinc-300">{entry.phone || '—'}</td>
+                        <td className="px-6 py-4 text-zinc-300">
+                          {entry.phone || '—'}
+                          {entry.phoneVerified && entry.phone && (
+                            <span className="ml-2 text-[10px] uppercase text-green-500">✓</span>
+                          )}
+                        </td>
                         <td className="px-6 py-4">
                           <span className="text-xs font-bold uppercase bg-black border border-zinc-700 px-3 py-1 rounded-full text-amber-500">
                             {PROVIDER_LABELS[entry.provider] || entry.provider}
@@ -244,6 +279,26 @@ export default function Admin({ setActiveTab, setIsAuthModalOpen }) {
                         <td className="px-6 py-4 capitalize text-zinc-300">{entry.role}</td>
                         <td className="px-6 py-4 text-zinc-400 text-sm">{formatDate(entry.createdAt)}</td>
                         <td className="px-6 py-4 text-zinc-400 text-sm">{formatDate(entry.lastLoginAt)}</td>
+                        <td className="px-6 py-4">
+                          <div className="flex items-center gap-3">
+                            <button
+                              onClick={() => setEditingUser(entry)}
+                              className="inline-flex items-center gap-1.5 text-amber-500 hover:text-amber-400 text-sm font-semibold"
+                            >
+                              <Pencil className="w-4 h-4" />
+                              Edit
+                            </button>
+                            <button
+                              onClick={() => handleDeleteUser(entry.id)}
+                              disabled={deletingUserId === entry.id || entry.id === user.id}
+                              className="inline-flex items-center gap-1.5 text-red-400 hover:text-red-300 disabled:opacity-50 text-sm font-semibold"
+                              title={entry.id === user.id ? 'Cannot delete your own account' : undefined}
+                            >
+                              <Trash2 className="w-4 h-4" />
+                              {deletingUserId === entry.id ? 'Deleting...' : 'Delete'}
+                            </button>
+                          </div>
+                        </td>
                       </tr>
                     ))
                   )}
@@ -318,6 +373,13 @@ export default function Admin({ setActiveTab, setIsAuthModalOpen }) {
           </div>
         )}
       </div>
+
+      <EditUserModal
+        user={editingUser}
+        currentUserId={user.id}
+        onClose={() => setEditingUser(null)}
+        onSave={handleSaveUser}
+      />
     </div>
   );
 }

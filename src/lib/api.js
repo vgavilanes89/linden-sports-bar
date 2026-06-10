@@ -109,6 +109,20 @@ export const api = {
     return request('/api/admin/users');
   },
 
+  async updateAdminUser(userId, payload) {
+    const data = await request(`/api/admin/users/${userId}`, {
+      method: 'PATCH',
+      body: JSON.stringify(payload),
+    });
+    return data.user;
+  },
+
+  async deleteAdminUser(userId) {
+    return request(`/api/admin/users/${userId}`, {
+      method: 'DELETE',
+    });
+  },
+
   async getOrders() {
     return request('/api/orders');
   },

@@ -213,3 +213,63 @@ export function clearPhoneVerification(userId) {
   writeUsers(users.map((entry) => (entry.id === userId ? updated : entry)));
   return updated;
 }
+
+export function updateUserByAdmin(userId, { name, email, phone, role, phoneVerified }) {
+  const users = readUsers();
+  const existing = users.find((user) => user.id === userId);
+  if (!existing) {
+    return { error: 'User not found.' };
+  }
+
+  const normalizedEmail = email?.trim().toLowerCase() || null;
+  const normalizedPhone = phone?.replace(/\D/g, '') || null;
+
+  if (!name?.trim()) {
+    return { error: 'Name is required.' };
+  }
+
+  if (normalizedEmail) {
+    const emailTaken = users.find(
+      (user) => user.id !== userId && user.email?.toLowerCase() === normalizedEmail
+    );
+    if (emailTaken) {
+      return { error: 'Another account already uses this email.' };
+    }
+  }
+
+  if (normalizedPhone && isPhoneTakenByOther(normalizedPhone, userId)) {
+    return { error: 'Another account already uses this phone number.' };
+  }
+
+  const verified = Boolean(phoneVerified && normalizedPhone);
+
+  const updated = {
+    ...existing,
+    name: name.trim(),
+    email: normalizedEmail,
+    phone: normalizedPhone,
+    phone_verified: verified,
+    phone_pending: verified ? null : existing.phone_pending,
+    phone_verify_code_hash: verified ? null : existing.phone_verify_code_hash,
+    phone_verify_expires: verified ? null : existing.phone_verify_expires,
+    role: role === 'admin' ? 'admin' : 'user',
+    provider_id:
+      existing.provider === 'email' && normalizedEmail
+        ? normalizedEmail
+        : existing.provider_id,
+  };
+
+  writeUsers(users.map((entry) => (entry.id === userId ? updated : entry)));
+  return { user: updated };
+}
+
+export function deleteUser(userId) {
+  const users = readUsers();
+  const existing = users.find((user) => user.id === userId);
+  if (!existing) {
+    return { error: 'User not found.' };
+  }
+
+  writeUsers(users.filter((user) => user.id !== userId));
+  return { user: existing };
+}
