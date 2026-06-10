@@ -133,3 +133,20 @@ export function touchUserLogin(userId) {
   writeUsers(users.map((entry) => (entry.id === userId ? updated : entry)));
   return updated;
 }
+
+export function updateUserPhone(userId, phone) {
+  const existingByPhone = findUserByPhone(phone);
+  if (existingByPhone && existingByPhone.id !== userId) {
+    return { error: 'This phone number is already linked to another account.' };
+  }
+
+  const users = readUsers();
+  const existing = users.find((user) => user.id === userId);
+  if (!existing) {
+    return { error: 'User not found.' };
+  }
+
+  const updated = { ...existing, phone };
+  writeUsers(users.map((entry) => (entry.id === userId ? updated : entry)));
+  return { user: updated };
+}

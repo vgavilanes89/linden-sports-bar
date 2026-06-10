@@ -38,6 +38,12 @@ export function AuthProvider({ children }) {
       user,
       loading,
       isAdmin: user?.role === 'admin',
+      needsPhone: Boolean(user && !user.phone),
+      async updatePhone(phone) {
+        const updatedUser = await api.updatePhone(phone);
+        setUser(updatedUser);
+        return updatedUser;
+      },
       async register(payload) {
         const loggedInUser = await api.register(payload);
         setUser(loggedInUser);

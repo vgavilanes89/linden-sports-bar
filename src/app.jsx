@@ -4,6 +4,7 @@ import Navbar from './components/navbar';
 import Footer from './components/footer';
 import Cart from './components/cart';
 import AuthModal from './components/authmodal';
+import PhoneRequiredModal from './components/phonerequiredmodal';
 
 import Home from './pages/home';
 import Menu from './pages/menu';
@@ -111,6 +112,7 @@ export default function App() {
       />
 
       <AuthModal isAuthModalOpen={isAuthModalOpen} setIsAuthModalOpen={setIsAuthModalOpen} />
+      <PhoneRequiredModal />
     </div>
   );
 }

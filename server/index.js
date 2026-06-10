@@ -13,6 +13,7 @@ import {
   listUsers,
   createEmailUser,
   touchUserLogin,
+  updateUserPhone,
 } from './db.js';
 import {
   signToken,
@@ -76,6 +77,21 @@ app.get('/api/auth/me', authMiddleware, (req, res) => {
     return res.status(404).json({ error: 'User not found.' });
   }
   res.json({ user: sanitizeUser(user) });
+});
+
+app.patch('/api/auth/phone', authMiddleware, (req, res) => {
+  const normalizedPhone = normalizePhone(req.body.phone);
+
+  if (!normalizedPhone || normalizedPhone.length < 10) {
+    return res.status(400).json({ error: 'A valid phone number is required.' });
+  }
+
+  const result = updateUserPhone(req.auth.sub, normalizedPhone);
+  if (result.error) {
+    return res.status(409).json({ error: result.error });
+  }
+
+  res.json({ user: sanitizeUser(result.user) });
 });
 
 app.post('/api/auth/register', async (req, res) => {
@@ -273,6 +289,10 @@ app.post('/api/orders', authMiddleware, (req, res) => {
   const user = findUserById(req.auth.sub);
   if (!user) {
     return res.status(404).json({ error: 'User not found.' });
+  }
+
+  if (!user.phone) {
+    return res.status(400).json({ error: 'A phone number is required on your account before placing orders.' });
   }
 
   const { items, subtotal, tax, total } = req.body;

@@ -45,6 +45,14 @@ export const api = {
     return request('/api/auth/me');
   },
 
+  async updatePhone(phone) {
+    const data = await request('/api/auth/phone', {
+      method: 'PATCH',
+      body: JSON.stringify({ phone }),
+    });
+    return data.user;
+  },
+
   async register(payload) {
     const data = await request('/api/auth/register', {
       method: 'POST',
