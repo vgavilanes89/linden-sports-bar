@@ -53,6 +53,11 @@ export function AuthProvider({ children }) {
         setUser(loggedInUser);
         return loggedInUser;
       },
+      async loginWithApple(payload) {
+        const loggedInUser = await api.loginWithApple(payload);
+        setUser(loggedInUser);
+        return loggedInUser;
+      },
       logout() {
         api.logout();
         setUser(null);

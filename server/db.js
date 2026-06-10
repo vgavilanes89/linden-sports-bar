@@ -59,7 +59,7 @@ export function upsertUser(user) {
   if (existing) {
     const updated = {
       ...existing,
-      name: user.name,
+      name: user.name?.trim() || existing.name,
       email: user.email ?? existing.email,
       phone: user.phone ?? existing.phone,
       provider: user.provider,

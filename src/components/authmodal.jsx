@@ -1,76 +1,16 @@
 import React, { useState } from 'react';
 import { X, Apple, Mail, Phone, User, Loader2, ChevronLeft } from 'lucide-react';
 import { GoogleLogin } from '@react-oauth/google';
+import AppleSignin from 'react-apple-signin-auth';
 import { useAuth } from '../context/AuthContext';
-import { GOOGLE_CLIENT_ID } from '../lib/api';
+import { GOOGLE_CLIENT_ID, APPLE_CLIENT_ID } from '../lib/api';
 
 const inputClassName =
   'w-full bg-black border border-zinc-700 rounded-xl px-4 py-3 text-white placeholder:text-zinc-600 focus:outline-none focus:border-amber-500 transition-colors';
 
-function SocialProfileForm({ provider, providerLabel, onBack, onSubmit, loading, error }) {
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [phone, setPhone] = useState('');
-
-  const handleSubmit = (event) => {
-    event.preventDefault();
-    onSubmit({ provider, name, email, phone });
-  };
-
-  return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <button
-        type="button"
-        onClick={onBack}
-        className="flex items-center gap-2 text-zinc-400 hover:text-amber-500 text-sm mb-2"
-      >
-        <ChevronLeft className="w-4 h-4" /> Back
-      </button>
-
-      <p className="text-zinc-400 text-sm">
-        Complete your {providerLabel} sign-in with your name and contact info.
-      </p>
-
-      <input
-        type="text"
-        required
-        value={name}
-        onChange={(e) => setName(e.target.value)}
-        placeholder="Full name"
-        className={inputClassName}
-      />
-      <input
-        type="email"
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-        placeholder="Email address"
-        className={inputClassName}
-      />
-      <input
-        type="tel"
-        value={phone}
-        onChange={(e) => setPhone(e.target.value)}
-        placeholder="Phone number (optional if email provided)"
-        className={inputClassName}
-      />
-
-      {error && <p className="text-red-400 text-sm">{error}</p>}
-
-      <button
-        type="submit"
-        disabled={loading}
-        className="w-full bg-amber-500 hover:bg-amber-400 disabled:opacity-60 text-black font-bold py-3 rounded-xl transition-colors"
-      >
-        {loading ? 'Signing in...' : `Continue with ${providerLabel}`}
-      </button>
-    </form>
-  );
-}
-
 export default function AuthModal({ isAuthModalOpen, setIsAuthModalOpen }) {
-  const { loginWithEmailPhone, loginWithSocial, loginWithGoogle } = useAuth();
+  const { loginWithEmailPhone, loginWithGoogle, loginWithApple } = useAuth();
   const [mode, setMode] = useState('main');
-  const [socialProvider, setSocialProvider] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -81,7 +21,6 @@ export default function AuthModal({ isAuthModalOpen, setIsAuthModalOpen }) {
   const closeModal = () => {
     setIsAuthModalOpen(false);
     setMode('main');
-    setSocialProvider(null);
     setError('');
     setName('');
     setEmail('');
@@ -95,20 +34,6 @@ export default function AuthModal({ isAuthModalOpen, setIsAuthModalOpen }) {
 
     try {
       await loginWithEmailPhone({ name, email, phone });
-      closeModal();
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleSocialLogin = async (payload) => {
-    setLoading(true);
-    setError('');
-
-    try {
-      await loginWithSocial(payload);
       closeModal();
     } catch (err) {
       setError(err.message);
@@ -131,7 +56,26 @@ export default function AuthModal({ isAuthModalOpen, setIsAuthModalOpen }) {
     }
   };
 
+  const handleAppleSuccess = async (response) => {
+    setLoading(true);
+    setError('');
+
+    try {
+      await loginWithApple({
+        identityToken: response.authorization.id_token,
+        user: response.user,
+      });
+      closeModal();
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   if (!isAuthModalOpen) return null;
+
+  const hasSocialLogin = GOOGLE_CLIENT_ID || APPLE_CLIENT_ID;
 
   return (
     <div className="fixed inset-0 z-[70] flex items-center justify-center p-4">
@@ -146,7 +90,7 @@ export default function AuthModal({ isAuthModalOpen, setIsAuthModalOpen }) {
 
         <div className="text-center mb-8">
           <h2 className="text-3xl font-black text-white uppercase mb-2">Log In</h2>
-          <p className="text-zinc-400">Sign in to save your order history and pay quickly.</p>
+          <p className="text-zinc-400">Create an account or sign in to checkout and save your orders.</p>
         </div>
 
         {mode === 'main' && (
@@ -164,50 +108,50 @@ export default function AuthModal({ isAuthModalOpen, setIsAuthModalOpen }) {
                 />
               </div>
             ) : (
-              <button
-                type="button"
-                onClick={() => {
-                  setSocialProvider('google');
-                  setMode('social');
-                }}
-                className="w-full bg-white text-black font-bold py-3 px-4 rounded-xl flex items-center justify-center gap-3 hover:bg-zinc-200 transition-colors"
-              >
-                Continue with Google
-              </button>
+              <p className="text-xs text-zinc-500 text-center bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-3">
+                Google sign-in is not configured yet.
+              </p>
             )}
 
-            <button
-              type="button"
-              onClick={() => {
-                setSocialProvider('apple');
-                setMode('social');
-              }}
-              className="w-full bg-black text-white border border-zinc-700 font-bold py-3 px-4 rounded-xl flex items-center justify-center gap-3 hover:bg-zinc-900 transition-colors"
-            >
-              <Apple className="w-5 h-5" fill="currentColor" />
-              Continue with Apple
-            </button>
+            {APPLE_CLIENT_ID ? (
+              <AppleSignin
+                authOptions={{
+                  clientId: APPLE_CLIENT_ID,
+                  scope: 'email name',
+                  redirectURI: window.location.origin,
+                  usePopup: true,
+                }}
+                uiType="dark"
+                onSuccess={handleAppleSuccess}
+                onError={(err) => setError(err?.error || 'Apple sign-in was cancelled or failed.')}
+                render={(props) => (
+                  <button
+                    type="button"
+                    {...props}
+                    disabled={loading || props.disabled}
+                    className="w-full bg-black text-white border border-zinc-700 font-bold py-3 px-4 rounded-xl flex items-center justify-center gap-3 hover:bg-zinc-900 transition-colors disabled:opacity-60"
+                  >
+                    <Apple className="w-5 h-5" fill="currentColor" />
+                    Continue with Apple
+                  </button>
+                )}
+              />
+            ) : (
+              <p className="text-xs text-zinc-500 text-center bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-3">
+                Apple sign-in is not configured yet.
+              </p>
+            )}
 
-            <button
-              type="button"
-              onClick={() => {
-                setSocialProvider('yahoo');
-                setMode('social');
-              }}
-              className="w-full bg-[#6001D2] text-white font-bold py-3 px-4 rounded-xl flex items-center justify-center gap-3 hover:bg-[#4a00a3] transition-colors"
-            >
-              <Mail className="w-5 h-5" />
-              Continue with Yahoo
-            </button>
-
-            <div className="relative py-2">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-zinc-800" />
+            {hasSocialLogin && (
+              <div className="relative py-2">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-zinc-800" />
+                </div>
+                <div className="relative flex justify-center text-xs uppercase">
+                  <span className="bg-zinc-950 px-2 text-zinc-500">or</span>
+                </div>
               </div>
-              <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-zinc-950 px-2 text-zinc-500">or</span>
-              </div>
-            </div>
+            )}
 
             <button
               type="button"
@@ -279,26 +223,9 @@ export default function AuthModal({ isAuthModalOpen, setIsAuthModalOpen }) {
               disabled={loading}
               className="w-full bg-amber-500 hover:bg-amber-400 disabled:opacity-60 text-black font-bold py-3 rounded-xl transition-colors"
             >
-              {loading ? 'Signing in...' : 'Sign In'}
+              {loading ? 'Signing in...' : 'Create Account / Sign In'}
             </button>
           </form>
-        )}
-
-        {mode === 'social' && socialProvider && (
-          <SocialProfileForm
-            provider={socialProvider}
-            providerLabel={
-              { google: 'Google', apple: 'Apple', yahoo: 'Yahoo' }[socialProvider] || socialProvider
-            }
-            onBack={() => {
-              setMode('main');
-              setSocialProvider(null);
-              setError('');
-            }}
-            onSubmit={handleSocialLogin}
-            loading={loading}
-            error={error}
-          />
         )}
 
         <div className="mt-8 text-center text-sm text-zinc-500">

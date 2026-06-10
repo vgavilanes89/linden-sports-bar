@@ -72,6 +72,15 @@ export const api = {
     return data.user;
   },
 
+  async loginWithApple({ identityToken, user }) {
+    const data = await request('/api/auth/apple', {
+      method: 'POST',
+      body: JSON.stringify({ identityToken, user }),
+    });
+    setToken(data.token);
+    return data.user;
+  },
+
   async getAdminUsers() {
     return request('/api/admin/users');
   },
@@ -82,3 +91,4 @@ export const api = {
 };
 
 export const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || '';
+export const APPLE_CLIENT_ID = import.meta.env.VITE_APPLE_CLIENT_ID || '';

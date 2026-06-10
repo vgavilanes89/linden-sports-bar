@@ -4,6 +4,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { randomUUID } from 'crypto';
 import { OAuth2Client } from 'google-auth-library';
+import appleSignin from 'apple-signin-auth';
 import {
   findUserById,
   upsertUser,
@@ -155,6 +156,47 @@ app.post('/api/auth/google', async (req, res) => {
     res.json(loginResponse(user));
   } catch {
     res.status(401).json({ error: 'Google sign-in failed.' });
+  }
+});
+
+app.post('/api/auth/apple', async (req, res) => {
+  const { identityToken, user: appleUser } = req.body;
+  const appleClientId = process.env.APPLE_CLIENT_ID;
+
+  if (!identityToken) {
+    return res.status(400).json({ error: 'Apple identity token is required.' });
+  }
+
+  if (!appleClientId) {
+    return res.status(503).json({
+      error: 'Apple sign-in is not configured. Set APPLE_CLIENT_ID on the server.',
+    });
+  }
+
+  try {
+    const claims = await appleSignin.verifyIdToken(identityToken, {
+      audience: appleClientId,
+    });
+
+    const providerId = claims.sub;
+    const email = claims.email?.toLowerCase() || null;
+    const firstName = appleUser?.name?.firstName?.trim();
+    const lastName = appleUser?.name?.lastName?.trim();
+    const fullName = [firstName, lastName].filter(Boolean).join(' ') || null;
+
+    const user = upsertUser({
+      id: randomUUID(),
+      name: fullName || email?.split('@')[0] || 'Apple User',
+      email,
+      phone: null,
+      provider: 'apple',
+      provider_id: providerId,
+      role: resolveRole(email),
+    });
+
+    res.json(loginResponse(user));
+  } catch {
+    res.status(401).json({ error: 'Apple sign-in failed.' });
   }
 });
 
