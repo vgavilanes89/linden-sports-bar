@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ShoppingCart, Menu as MenuIcon, X, Shield, ClipboardList, LogOut } from 'lucide-react';
+import { ShoppingCart, Menu as MenuIcon, X, Shield, ClipboardList, LogOut, Settings, Phone } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import UserMenu from './usermenu';
 
@@ -11,9 +11,10 @@ export default function Navbar({
   setIsAuthModalOpen,
 }) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const { user, isAdmin, logout } = useAuth();
+  const { user, isAdmin, logout, needsPhone } = useAuth();
 
   return (
+    <>
     <nav className="bg-black text-white sticky top-0 z-50 border-b border-amber-500/30">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-20 items-center">
@@ -164,6 +165,16 @@ export default function Navbar({
               <>
                 <button
                   onClick={() => {
+                    setActiveTab('account');
+                    setIsMobileMenuOpen(false);
+                  }}
+                  className="block w-full text-left px-3 py-4 text-base font-medium hover:text-amber-500 hover:bg-black flex items-center gap-2"
+                >
+                  <Settings className="w-5 h-5" /> My Account
+                  {needsPhone && <span className="text-xs text-amber-500">(add phone)</span>}
+                </button>
+                <button
+                  onClick={() => {
                     setActiveTab('orders');
                     setIsMobileMenuOpen(false);
                   }}
@@ -197,5 +208,19 @@ export default function Navbar({
         </div>
       )}
     </nav>
+
+    {user && needsPhone && (
+      <div className="bg-amber-500 text-black text-sm font-medium px-4 py-2.5 flex items-center justify-center gap-2">
+        <Phone className="w-4 h-4 shrink-0" />
+        <span>Add your phone number to place orders.</span>
+        <button
+          onClick={() => setActiveTab('account')}
+          className="underline font-bold hover:text-zinc-900 ml-1"
+        >
+          Go to My Account
+        </button>
+      </div>
+    )}
+    </>
   );
 }

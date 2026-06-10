@@ -1,9 +1,9 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { User, ClipboardList, LogOut, ChevronDown } from 'lucide-react';
+import { User, ClipboardList, LogOut, ChevronDown, Settings } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 export default function UserMenu({ setActiveTab, setIsAuthModalOpen }) {
-  const { user, logout } = useAuth();
+  const { user, logout, needsPhone } = useAuth();
   const [open, setOpen] = useState(false);
   const menuRef = useRef(null);
 
@@ -66,10 +66,27 @@ export default function UserMenu({ setActiveTab, setIsAuthModalOpen }) {
             <button
               type="button"
               onClick={() => {
-                setActiveTab('orders');
+                setActiveTab('account');
                 setOpen(false);
               }}
               className="w-full flex items-center gap-3 px-4 py-3 text-sm text-zinc-300 hover:bg-black hover:text-amber-500 transition-colors"
+            >
+              <Settings className="w-4 h-4" />
+              My Account
+              {needsPhone && (
+                <span className="ml-auto text-[10px] font-bold uppercase bg-amber-500 text-black px-1.5 py-0.5 rounded">
+                  Phone
+                </span>
+              )}
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                setActiveTab('orders');
+                setOpen(false);
+              }}
+              className="w-full flex items-center gap-3 px-4 py-3 text-sm text-zinc-300 hover:bg-black hover:text-amber-500 transition-colors border-t border-zinc-800"
             >
               <ClipboardList className="w-4 h-4" />
               My Orders

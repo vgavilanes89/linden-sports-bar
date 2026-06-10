@@ -19,7 +19,7 @@ import GoogleSignInButton from './googlesigninbutton';
 const inputClassName =
   'w-full bg-black border border-zinc-700 rounded-xl px-4 py-3 text-white placeholder:text-zinc-600 focus:outline-none focus:border-amber-500 transition-colors';
 
-export default function AuthModal({ isAuthModalOpen, setIsAuthModalOpen }) {
+export default function AuthModal({ isAuthModalOpen, setIsAuthModalOpen, onAuthenticated }) {
   const { register, loginWithEmailPassword, loginWithGoogle, loginWithApple } = useAuth();
   const { googleClientId, appleClientId } = useOAuthConfig();
   const [mode, setMode] = useState('main');
@@ -66,8 +66,9 @@ export default function AuthModal({ isAuthModalOpen, setIsAuthModalOpen }) {
     }
 
     try {
-      await register({ name, email, phone, password });
+      const loggedInUser = await register({ name, email, phone, password });
       closeModal();
+      onAuthenticated?.(loggedInUser);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -81,8 +82,9 @@ export default function AuthModal({ isAuthModalOpen, setIsAuthModalOpen }) {
     setError('');
 
     try {
-      await loginWithEmailPassword({ email, password });
+      const loggedInUser = await loginWithEmailPassword({ email, password });
       closeModal();
+      onAuthenticated?.(loggedInUser);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -95,8 +97,9 @@ export default function AuthModal({ isAuthModalOpen, setIsAuthModalOpen }) {
     setError('');
 
     try {
-      await loginWithGoogle(response.credential);
+      const loggedInUser = await loginWithGoogle(response.credential);
       closeModal();
+      onAuthenticated?.(loggedInUser);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -109,11 +112,12 @@ export default function AuthModal({ isAuthModalOpen, setIsAuthModalOpen }) {
     setError('');
 
     try {
-      await loginWithApple({
+      const loggedInUser = await loginWithApple({
         identityToken: response.authorization.id_token,
         user: response.user,
       });
       closeModal();
+      onAuthenticated?.(loggedInUser);
     } catch (err) {
       setError(err.message);
     } finally {

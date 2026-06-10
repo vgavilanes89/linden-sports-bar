@@ -4,7 +4,7 @@ import Navbar from './components/navbar';
 import Footer from './components/footer';
 import Cart from './components/cart';
 import AuthModal from './components/authmodal';
-import PhoneRequiredModal from './components/phonerequiredmodal';
+import Account from './pages/account';
 
 import Home from './pages/home';
 import Menu from './pages/menu';
@@ -92,6 +92,9 @@ export default function App() {
         {activeTab === 'orders' && (
           <Orders setActiveTab={setActiveTab} setIsAuthModalOpen={setIsAuthModalOpen} />
         )}
+        {activeTab === 'account' && (
+          <Account setActiveTab={setActiveTab} setIsAuthModalOpen={setIsAuthModalOpen} />
+        )}
         {activeTab === 'admin' && (
           <Admin setActiveTab={setActiveTab} setIsAuthModalOpen={setIsAuthModalOpen} />
         )}
@@ -107,12 +110,20 @@ export default function App() {
         updateQuantity={updateQuantity}
         cartTotal={cartTotal}
         setIsAuthModalOpen={setIsAuthModalOpen}
+        setActiveTab={setActiveTab}
         onPlaceOrder={handlePlaceOrder}
         orderPlacing={orderPlacing}
       />
 
-      <AuthModal isAuthModalOpen={isAuthModalOpen} setIsAuthModalOpen={setIsAuthModalOpen} />
-      <PhoneRequiredModal />
+      <AuthModal
+        isAuthModalOpen={isAuthModalOpen}
+        setIsAuthModalOpen={setIsAuthModalOpen}
+        onAuthenticated={(loggedInUser) => {
+          if (!loggedInUser.phone) {
+            setActiveTab('account');
+          }
+        }}
+      />
     </div>
   );
 }

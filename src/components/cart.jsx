@@ -10,10 +10,11 @@ export default function Cart({
   updateQuantity,
   cartTotal,
   setIsAuthModalOpen,
+  setActiveTab,
   onPlaceOrder,
   orderPlacing,
 }) {
-  const { user } = useAuth();
+  const { user, needsPhone } = useAuth();
   return (
     <div className={`fixed inset-0 z-[60] flex justify-end ${isCartOpen ? 'pointer-events-auto' : 'pointer-events-none'}`}>
       <div 
@@ -78,6 +79,9 @@ export default function Cart({
                 if (!user) {
                   setIsCartOpen(false);
                   setIsAuthModalOpen(true);
+                } else if (needsPhone) {
+                  setIsCartOpen(false);
+                  setActiveTab('account');
                 } else {
                   onPlaceOrder(user);
                 }
