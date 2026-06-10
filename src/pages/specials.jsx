@@ -3,6 +3,26 @@ import { CalendarDays, Clock, Star, X, ZoomIn } from 'lucide-react';
 
 const SPECIALS = [
   {
+    id: 'lunch-specials',
+    title: 'Lunch Specials',
+    subtitle: 'Monday–Friday · 11 AM – 3 PM',
+    schedule: { day: 'Monday – Friday', time: '11 AM – 3 PM' },
+    description:
+      'A full lunch for $11.95 — pick a starter and a main, then add $5 margaritas or sangria. Perfect for a midday break while the game is on.',
+    image: '/specials/lunch-specials.png',
+    alt: 'Lunch Specials flyer — $11.95 two-course lunch and $5 drinks Monday through Friday at Linden Sports Bar',
+    tags: ['Food Special', 'Drink Special', 'Weekdays'],
+    deals: [
+      {
+        item: 'Two-Course Lunch',
+        price: '$11.95',
+        note: 'Choose a first course: Soup of the Day, House Salad, or Caesar Salad. Then pick a main: Pasta Plate, Grilled Chicken, Cooked Beef Plate, Pork Chop, or Grilled Fish.',
+      },
+      { item: 'Margaritas', price: '$5', note: 'Per glass' },
+      { item: 'Sangria (Red or White)', price: '$5' },
+    ],
+  },
+  {
     id: 'happy-hour',
     title: 'Happy Hour',
     subtitle: 'Monday–Friday · 4 PM – 6 PM',
@@ -180,8 +200,8 @@ export default function Specials() {
             <Star className="w-10 h-10" fill="currentColor" /> Weekly Specials
           </h2>
           <p className="text-zinc-400 mt-4 text-lg max-w-2xl mx-auto">
-            Happy hour, Taco Tuesday, midweek margaritas, and Ladies Night — recurring deals every
-            week at Linden Sports Bar & Restaurant.
+            Lunch specials, happy hour, Taco Tuesday, midweek margaritas, and Ladies Night —
+            recurring deals every week at Linden Sports Bar & Restaurant.
           </p>
         </div>
 
