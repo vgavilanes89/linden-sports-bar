@@ -1,6 +1,15 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { ShoppingCart, ImageIcon } from 'lucide-react';
 import { MENU_SECTIONS, MENU_CATEGORIES_BY_SECTION, MENU_ITEMS } from '../data/menu';
+
+const FOOD_SECTION = 'Food';
+
+function formatCategoryLabel(category) {
+  return category
+    .split(' ')
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join(' ');
+}
 
 function MenuItemImage({ item }) {
   if (item.image) {
@@ -53,9 +62,29 @@ function MenuItemCard({ item, addToCart }) {
 
 export default function Menu({ addToCart }) {
   const [activeSection, setActiveSection] = useState(MENU_SECTIONS[0]);
+  const [activeCategory, setActiveCategory] = useState(null);
 
   const subcategories = MENU_CATEGORIES_BY_SECTION[activeSection] ?? [];
   const sectionItems = MENU_ITEMS.filter((item) => item.section === activeSection);
+
+  const foodCategoriesWithItems = useMemo(() => {
+    if (activeSection !== FOOD_SECTION) return [];
+    return subcategories.filter((category) =>
+      sectionItems.some((item) => item.category === category)
+    );
+  }, [activeSection, subcategories, sectionItems]);
+
+  useEffect(() => {
+    if (activeSection !== FOOD_SECTION) {
+      setActiveCategory(null);
+      return;
+    }
+
+    setActiveCategory((current) => {
+      if (current && foodCategoriesWithItems.includes(current)) return current;
+      return foodCategoriesWithItems[0] ?? null;
+    });
+  }, [activeSection, foodCategoriesWithItems]);
 
   return (
     <div className="bg-black min-h-screen py-16 text-white">
@@ -83,25 +112,63 @@ export default function Menu({ addToCart }) {
           ))}
         </div>
 
-        <div className="space-y-16">
-          {subcategories.map((category) => {
-            const items = sectionItems.filter((item) => item.category === category);
-            if (items.length === 0) return null;
+        {activeSection === FOOD_SECTION && foodCategoriesWithItems.length > 0 && (
+          <div className="mb-10 -mx-4 px-4 sm:mx-0 sm:px-0">
+            <div className="flex gap-2 overflow-x-auto pb-2 [scrollbar-width:thin]">
+              {foodCategoriesWithItems.map((category) => (
+                <button
+                  key={category}
+                  type="button"
+                  onClick={() => setActiveCategory(category)}
+                  className={`shrink-0 rounded-full px-4 py-2.5 text-sm font-semibold whitespace-nowrap transition-colors ${
+                    activeCategory === category
+                      ? 'bg-amber-500 text-black'
+                      : 'bg-zinc-900 text-zinc-400 hover:bg-zinc-800 hover:text-white'
+                  }`}
+                >
+                  {formatCategoryLabel(category)}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
 
-            return (
-              <div key={category}>
-                <h3 className="text-2xl font-bold border-b-2 border-amber-500 pb-2 mb-6 uppercase tracking-wider">
-                  {category}
-                </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {items.map((item) => (
+        {activeSection === FOOD_SECTION ? (
+          activeCategory && (
+            <div>
+              <h3 className="mb-6 border-b-2 border-amber-500 pb-2 text-2xl font-bold uppercase tracking-wider">
+                {formatCategoryLabel(activeCategory)}
+              </h3>
+              <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                {sectionItems
+                  .filter((item) => item.category === activeCategory)
+                  .map((item) => (
                     <MenuItemCard key={item.id} item={item} addToCart={addToCart} />
                   ))}
-                </div>
               </div>
-            );
-          })}
-        </div>
+            </div>
+          )
+        ) : (
+          <div className="space-y-16">
+            {subcategories.map((category) => {
+              const items = sectionItems.filter((item) => item.category === category);
+              if (items.length === 0) return null;
+
+              return (
+                <div key={category}>
+                  <h3 className="mb-6 border-b-2 border-amber-500 pb-2 text-2xl font-bold uppercase tracking-wider">
+                    {category}
+                  </h3>
+                  <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                    {items.map((item) => (
+                      <MenuItemCard key={item.id} item={item} addToCart={addToCart} />
+                    ))}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
     </div>
   );
