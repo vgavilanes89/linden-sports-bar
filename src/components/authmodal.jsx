@@ -3,13 +3,14 @@ import { X, Apple, Mail, Phone, User, Loader2, ChevronLeft } from 'lucide-react'
 import { GoogleLogin } from '@react-oauth/google';
 import AppleSignin from 'react-apple-signin-auth';
 import { useAuth } from '../context/AuthContext';
-import { GOOGLE_CLIENT_ID, APPLE_CLIENT_ID } from '../lib/api';
+import { useOAuthConfig } from '../context/OAuthConfigContext';
 
 const inputClassName =
   'w-full bg-black border border-zinc-700 rounded-xl px-4 py-3 text-white placeholder:text-zinc-600 focus:outline-none focus:border-amber-500 transition-colors';
 
 export default function AuthModal({ isAuthModalOpen, setIsAuthModalOpen }) {
   const { loginWithEmailPhone, loginWithGoogle, loginWithApple } = useAuth();
+  const { googleClientId, appleClientId } = useOAuthConfig();
   const [mode, setMode] = useState('main');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -75,7 +76,7 @@ export default function AuthModal({ isAuthModalOpen, setIsAuthModalOpen }) {
 
   if (!isAuthModalOpen) return null;
 
-  const hasSocialLogin = GOOGLE_CLIENT_ID || APPLE_CLIENT_ID;
+  const hasSocialLogin = googleClientId || appleClientId;
 
   return (
     <div className="fixed inset-0 z-[70] flex items-center justify-center p-4">
@@ -95,7 +96,7 @@ export default function AuthModal({ isAuthModalOpen, setIsAuthModalOpen }) {
 
         {mode === 'main' && (
           <div className="space-y-4">
-            {GOOGLE_CLIENT_ID ? (
+            {googleClientId ? (
               <div className="flex justify-center [&>div]:w-full">
                 <GoogleLogin
                   onSuccess={handleGoogleSuccess}
@@ -113,10 +114,10 @@ export default function AuthModal({ isAuthModalOpen, setIsAuthModalOpen }) {
               </p>
             )}
 
-            {APPLE_CLIENT_ID ? (
+            {appleClientId ? (
               <AppleSignin
                 authOptions={{
-                  clientId: APPLE_CLIENT_ID,
+                  clientId: appleClientId,
                   scope: 'email name',
                   redirectURI: window.location.origin,
                   usePopup: true,

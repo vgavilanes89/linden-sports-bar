@@ -52,6 +52,13 @@ app.get('/api/health', (_req, res) => {
   res.json({ ok: true });
 });
 
+app.get('/api/config/public', (_req, res) => {
+  res.json({
+    googleClientId: process.env.GOOGLE_CLIENT_ID || '',
+    appleClientId: process.env.APPLE_CLIENT_ID || '',
+  });
+});
+
 app.get('/api/auth/me', authMiddleware, (req, res) => {
   const user = findUserById(req.auth.sub);
   if (!user) {

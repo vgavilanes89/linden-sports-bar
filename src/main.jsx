@@ -3,18 +3,28 @@ import ReactDOM from 'react-dom/client';
 import { GoogleOAuthProvider } from '@react-oauth/google';
 import App from './app.jsx';
 import { AuthProvider } from './context/AuthContext.jsx';
-import { GOOGLE_CLIENT_ID } from './lib/api.js';
+import { OAuthConfigProvider, useOAuthConfig } from './context/OAuthConfigContext.jsx';
 import './index.css';
 
-function Root() {
+function AppWithOAuth() {
+  const { googleClientId, loading } = useOAuthConfig();
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-black flex items-center justify-center">
+        <div className="w-8 h-8 border-2 border-amber-500 border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+
   const app = (
     <AuthProvider>
       <App />
     </AuthProvider>
   );
 
-  return GOOGLE_CLIENT_ID ? (
-    <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>{app}</GoogleOAuthProvider>
+  return googleClientId ? (
+    <GoogleOAuthProvider clientId={googleClientId}>{app}</GoogleOAuthProvider>
   ) : (
     app
   );
@@ -22,6 +32,8 @@ function Root() {
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
-    <Root />
+    <OAuthConfigProvider>
+      <AppWithOAuth />
+    </OAuthConfigProvider>
   </React.StrictMode>
 );
