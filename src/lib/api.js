@@ -45,8 +45,17 @@ export const api = {
     return request('/api/auth/me');
   },
 
-  async loginWithEmailPhone(payload) {
-    const data = await request('/api/auth/email-phone', {
+  async register(payload) {
+    const data = await request('/api/auth/register', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+    setToken(data.token);
+    return data.user;
+  },
+
+  async loginWithEmailPassword(payload) {
+    const data = await request('/api/auth/login', {
       method: 'POST',
       body: JSON.stringify(payload),
     });

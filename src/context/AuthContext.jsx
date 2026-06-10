@@ -38,8 +38,13 @@ export function AuthProvider({ children }) {
       user,
       loading,
       isAdmin: user?.role === 'admin',
-      async loginWithEmailPhone(payload) {
-        const loggedInUser = await api.loginWithEmailPhone(payload);
+      async register(payload) {
+        const loggedInUser = await api.register(payload);
+        setUser(loggedInUser);
+        return loggedInUser;
+      },
+      async loginWithEmailPassword(payload) {
+        const loggedInUser = await api.loginWithEmailPassword(payload);
         setUser(loggedInUser);
         return loggedInUser;
       },

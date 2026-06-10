@@ -65,6 +65,7 @@ export function upsertUser(user) {
       provider: user.provider,
       provider_id: user.provider_id ?? existing.provider_id,
       role: user.role ?? existing.role,
+      password_hash: user.password_hash ?? existing.password_hash,
       last_login_at: now,
     };
 
@@ -79,6 +80,7 @@ export function upsertUser(user) {
     phone: user.phone ?? null,
     provider: user.provider,
     provider_id: user.provider_id ?? null,
+    password_hash: user.password_hash ?? null,
     role: user.role ?? 'user',
     created_at: now,
     last_login_at: now,
@@ -92,4 +94,42 @@ export function listUsers() {
   return readUsers().sort(
     (a, b) => new Date(b.last_login_at).getTime() - new Date(a.last_login_at).getTime()
   );
+}
+
+export function createEmailUser({ id, name, email, phone, passwordHash, role }) {
+  if (findUserByEmail(email)) {
+    return { error: 'An account with this email already exists.' };
+  }
+
+  if (findUserByPhone(phone)) {
+    return { error: 'An account with this phone number already exists.' };
+  }
+
+  const now = new Date().toISOString();
+  const user = {
+    id,
+    name,
+    email,
+    phone,
+    provider: 'email',
+    provider_id: email,
+    password_hash: passwordHash,
+    role: role ?? 'user',
+    created_at: now,
+    last_login_at: now,
+  };
+
+  writeUsers([user, ...readUsers()]);
+  return { user };
+}
+
+export function touchUserLogin(userId) {
+  const users = readUsers();
+  const existing = users.find((user) => user.id === userId);
+  if (!existing) return null;
+
+  const now = new Date().toISOString();
+  const updated = { ...existing, last_login_at: now };
+  writeUsers(users.map((entry) => (entry.id === userId ? updated : entry)));
+  return updated;
 }

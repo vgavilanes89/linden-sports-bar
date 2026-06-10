@@ -3,12 +3,16 @@ import cors from 'cors';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { randomUUID } from 'crypto';
+import bcrypt from 'bcryptjs';
 import { OAuth2Client } from 'google-auth-library';
 import appleSignin from 'apple-signin-auth';
 import {
   findUserById,
+  findUserByEmail,
   upsertUser,
   listUsers,
+  createEmailUser,
+  touchUserLogin,
 } from './db.js';
 import {
   signToken,
@@ -74,31 +78,65 @@ app.get('/api/auth/me', authMiddleware, (req, res) => {
   res.json({ user: sanitizeUser(user) });
 });
 
-app.post('/api/auth/email-phone', (req, res) => {
-  const { name, email, phone } = req.body;
+app.post('/api/auth/register', async (req, res) => {
+  const { name, email, phone, password } = req.body;
 
   if (!name?.trim()) {
-    return res.status(400).json({ error: 'Name is required.' });
+    return res.status(400).json({ error: 'Full name is required.' });
   }
 
-  const normalizedEmail = email?.trim().toLowerCase() || null;
+  const normalizedEmail = email?.trim().toLowerCase();
   const normalizedPhone = normalizePhone(phone);
 
-  if (!normalizedEmail && !normalizedPhone) {
-    return res.status(400).json({ error: 'Email or phone number is required.' });
+  if (!normalizedEmail) {
+    return res.status(400).json({ error: 'Email is required.' });
   }
 
-  const user = upsertUser({
+  if (!normalizedPhone) {
+    return res.status(400).json({ error: 'Phone number is required.' });
+  }
+
+  if (!password || password.length < 8) {
+    return res.status(400).json({ error: 'Password must be at least 8 characters.' });
+  }
+
+  const passwordHash = await bcrypt.hash(password, 10);
+  const result = createEmailUser({
     id: randomUUID(),
     name: name.trim(),
     email: normalizedEmail,
     phone: normalizedPhone,
-    provider: 'email',
-    provider_id: normalizedEmail || normalizedPhone,
+    passwordHash,
     role: resolveRole(normalizedEmail),
   });
 
-  res.json(loginResponse(user));
+  if (result.error) {
+    return res.status(409).json({ error: result.error });
+  }
+
+  res.status(201).json(loginResponse(result.user));
+});
+
+app.post('/api/auth/login', async (req, res) => {
+  const { email, password } = req.body;
+
+  const normalizedEmail = email?.trim().toLowerCase();
+  if (!normalizedEmail || !password) {
+    return res.status(400).json({ error: 'Email and password are required.' });
+  }
+
+  const user = findUserByEmail(normalizedEmail);
+  if (!user?.password_hash) {
+    return res.status(401).json({ error: 'Invalid email or password.' });
+  }
+
+  const valid = await bcrypt.compare(password, user.password_hash);
+  if (!valid) {
+    return res.status(401).json({ error: 'Invalid email or password.' });
+  }
+
+  const loggedIn = touchUserLogin(user.id);
+  res.json(loginResponse(loggedIn));
 });
 
 app.post('/api/auth/social', (req, res) => {
