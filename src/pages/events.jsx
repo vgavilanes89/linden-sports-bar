@@ -3,6 +3,18 @@ import { CalendarDays, MapPin, X, ZoomIn } from 'lucide-react';
 
 const EVENTS = [
   {
+    id: 'todays-specials',
+    title: "Today's Specials",
+    subtitle: 'All FIFA games showing here!',
+    date: 'Daily',
+    time: 'While supplies last',
+    description:
+      'Beer bucket and pizza for $24.99, aguardiente and Colombian picada for $59.99, plus $15 domestic buckets, $20 imported buckets, and $3 house shots. Catch every FIFA match on the big screens.',
+    image: '/specials/todays-specials.png',
+    alt: "Today's Specials flyer — beer bucket and pizza, aguardiente and picada, bucket and shot deals; all FIFA games at Linden Sports Bar",
+    tags: ['Live Sports', 'FIFA', 'Food & Drink Specials'],
+  },
+  {
     id: 'mondays-basketball',
     title: 'Mondays Are for Basketball',
     subtitle: 'NBA Finals • Game 3 — Spurs vs Knicks',
