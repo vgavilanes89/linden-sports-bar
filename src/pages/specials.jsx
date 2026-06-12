@@ -3,6 +3,30 @@ import { CalendarDays, Clock, Star, X, ZoomIn } from 'lucide-react';
 
 const SPECIALS = [
   {
+    id: 'todays-specials',
+    title: "Today's Specials",
+    subtitle: 'Beer buckets, pizza, aguardiente & picada',
+    schedule: { day: 'Daily', time: 'While supplies last' },
+    description:
+      'Game-day deals at Linden Sports Bar — beer buckets with pizza, aguardiente and Colombian picada combos, plus domestic buckets, imported buckets, and house shots at great prices. All FIFA games showing here!',
+    image: '/specials/todays-specials.png',
+    alt: "Today's Specials flyer — beer bucket and pizza $24.99, aguardiente and Colombian picada $59.99, bucket and shot deals at Linden Sports Bar",
+    tags: ['Food Special', 'Drink Special', 'Daily'],
+    deals: [
+      {
+        item: 'Bucket Imported or Domestic Beer + Plain or Pepperoni Pizza',
+        price: '$24.99',
+      },
+      {
+        item: 'Small Bottle Aguardiente Tapa Azul or Amarillo + Colombian Picada',
+        price: '$59.99',
+      },
+      { item: 'Domestic Buckets', price: '$15' },
+      { item: 'Imported Buckets', price: '$20' },
+      { item: 'House Shots', price: '$3' },
+    ],
+  },
+  {
     id: 'lunch-specials',
     title: 'Lunch Specials',
     subtitle: 'Monday–Friday · 11 AM – 3 PM',
@@ -200,8 +224,8 @@ export default function Specials() {
             <Star className="w-10 h-10" fill="currentColor" /> Weekly Specials
           </h2>
           <p className="text-zinc-400 mt-4 text-lg max-w-2xl mx-auto">
-            Lunch specials, happy hour, Taco Tuesday, midweek margaritas, and Ladies Night —
-            recurring deals every week at Linden Sports Bar & Restaurant.
+            Today&apos;s specials, lunch deals, happy hour, Taco Tuesday, midweek margaritas, and
+            Ladies Night — recurring deals every week at Linden Sports Bar & Restaurant.
           </p>
         </div>
 
